@@ -1,0 +1,359 @@
+import { forward } from "./functions.js";
+import { left } from "./functions.js";
+import { right } from "./functions.js";
+import { is_wall } from "./functions.js";
+import { condition } from "./functions.js";
+
+import { getTileState } from "./functions.js";
+import { getTileId } from "./functions.js";
+
+import { clamp } from "./functions.js";
+
+runOnStartup(async runtime =>
+{
+	runtime.addEventListener("beforeprojectstart", () => on_start(runtime));
+});
+
+export let Cat;
+export let Arrow;
+
+export let Mapa;
+
+export let Queue;
+export let Condition;
+export let Directions;
+
+
+export async function Execute(runtime) {
+    console.log("=== START EXECUTION ===");
+    runtime.globalVars.IsBlocked = true;
+    try {
+        Queue.instVars.Current = 0;
+        await interpretProgram(runtime);
+    } finally {
+        //runtime.globalVars.IsBlocked = false;
+        console.log("=== EXECUTION FINISHED ===");
+    }
+}
+
+
+async function interpretProgram(runtime) {
+    const stack = [];
+    const queueLength = Queue.width;
+
+    while (Queue.instVars.Current < queueLength && !shouldStopExecution(runtime)) {
+        const currentIndex = Queue.instVars.Current;
+        const rawCommand = Queue.getAt(currentIndex, 0);
+        const command = rawCommand.trim();
+
+        console.log(`Current: ${currentIndex}, Command: '${command}', Stack: ${JSON.stringify(stack.map(s => s.type))}`);
+
+        await wait(runtime, 75);
+
+        if (command === "forward" || command === "right" || command === "left") {
+            console.log(`Executing command: ${command}`);
+            await executeCommand(runtime, command);
+            Queue.instVars.Current++;
+        }
+        else if (command.startsWith("while")) {
+            console.log(`Processing WHILE: ${command}`);
+            const parts = command.split(/[\[\]|]/).filter(Boolean);
+            if (parts.length < 4) {
+                console.log("Invalid WHILE format, skipping");
+                Queue.instVars.Current++;
+                continue;
+            }
+
+            const checkType = parts[1];
+            const direction = parts[2];
+            const wall = parts[3] === "wall";
+            const result = condition(checkType, direction, wall);
+            console.log(`WHILE condition result: ${result}`);
+
+            if (result) {
+                console.log("WHILE condition true, entering loop");
+                stack.push({
+                    type: "while",
+                    startIndex: currentIndex,
+                    condition: command
+                });
+                Queue.instVars.Current++;
+            } else {
+                console.log("WHILE condition false, skipping loop");
+                skipToEnd(currentIndex);
+            }
+        }
+else if (command.startsWith("if")) {
+            console.log(`Processing IF: ${command}`);
+            const parts = command.split(/[\[\]|]/).filter(Boolean);
+            if (parts.length < 4) {
+                console.log("Invalid IF format, skipping");
+                Queue.instVars.Current++;
+                continue;
+            }
+
+            const checkType = parts[1];
+            const direction = parts[2];
+            const wall = parts[3] === "wall";
+            const result = condition(checkType, direction, wall);
+            console.log(`IF condition result: ${result}`);
+
+            if (result) {
+                console.log("IF condition true, executing THEN branch");
+                stack.push({
+                    type: "if",
+                    startIndex: currentIndex,
+                    conditionTrue: true
+                });
+                Queue.instVars.Current++;
+            } else {
+                console.log("IF condition false, looking for ELSE");
+                const elseIndex = findElse(currentIndex);
+                if (elseIndex !== -1) {
+                    console.log(`ELSE found at index ${elseIndex}, jumping to ELSE branch`);
+                    Queue.instVars.Current = elseIndex + 1;
+                    stack.push({
+                        type: "if",
+                        startIndex: currentIndex,
+                        conditionTrue: false
+                    });
+                } else {
+                    console.log("ELSE not found, skipping IF block");
+                    skipToEnd(currentIndex);
+                }
+            }
+        }
+        else if (command.startsWith("for")) {
+            console.log(`Processing FOR: ${command}`);
+            
+            const existingFor = stack.find(item => item.type === "for" && item.startIndex === currentIndex);
+            if (existingFor) {
+                console.log("Already in FOR loop, skipping reinitialization");
+                Queue.instVars.Current++;
+                continue;
+            }
+
+            const parts = command.split('|');
+            const kind = parts[1];
+
+            if (kind === "count") {
+                const count = parseInt(parts[2]) || 0;
+                if (count > 0) {
+                    console.log(`FOR count: ${count} iterations`);
+                    stack.push({
+                        type: "for",
+                        kind: "count",
+                        startIndex: currentIndex,
+                        iterations: count,
+                        currentIteration: 0
+                    });
+                    Queue.instVars.Current++;
+                } else {
+                    console.log("FOR count: 0 iterations, skipping");
+                    skipToEnd(currentIndex);
+                }
+            } else if (kind === "always") {
+                console.log("FOR always: infinite loop");
+                stack.push({
+                    type: "for",
+                    kind: "always",
+                    startIndex: currentIndex
+                });
+                Queue.instVars.Current++;
+            } else {
+                console.log("Unknown FOR type, skipping");
+                Queue.instVars.Current++;
+            }
+        }
+        else if (command === "else") {
+            console.log("Processing ELSE");
+            if (stack.length > 0) {
+                const block = stack[stack.length - 1];
+                if (block.type === "if" && block.conditionTrue) {
+                    console.log("Skipping ELSE branch (THEN was executed)");
+                    stack.pop();
+                    skipToEnd(currentIndex);
+                    continue;
+                }
+            }
+            console.log("Entering ELSE branch");
+            Queue.instVars.Current++;
+        }
+        else if (command === "end") {
+            console.log("Processing END");
+            if (stack.length > 0) {
+                const block = stack[stack.length - 1];
+                console.log(`END for block type: ${block.type}`);
+                
+                if (block.type === "while") {
+                    const parts = block.condition.split(/[\[\]|]/).filter(Boolean);
+                    if (parts.length >= 4) {
+                        const checkType = parts[1];
+                        const direction = parts[2];
+                        const wall = parts[3] === "wall";
+                        const result = condition(checkType, direction, wall);
+                        console.log(`WHILE end condition result: ${result}`);
+                        
+                        if (result) {
+                            console.log("WHILE condition still true, looping");
+                            Queue.instVars.Current = block.startIndex;
+                        } else {
+                            console.log("WHILE condition false, exiting loop");
+                            stack.pop();
+                            // После выхода из while проверяем внешний цикл
+                            checkOuterLoop(stack);
+                        }
+                    }
+                }
+                else if (block.type === "if") {
+                    console.log("END for IF, exiting block");
+                    stack.pop();
+                    Queue.instVars.Current++;
+                }
+                else if (block.type === "for") {
+                    if (block.kind === "count") {
+                        block.currentIteration++;
+                        console.log(`FOR count iteration: ${block.currentIteration}/${block.iterations}`);
+                        if (block.currentIteration < block.iterations) {
+                            console.log("FOR count continuing, next iteration");
+                            Queue.instVars.Current = block.startIndex;
+                        } else {
+                            console.log("FOR count finished, exiting loop");
+                            stack.pop();
+                            // После завершения for проверяем внешний цикл
+                            checkOuterLoop(stack);
+                        }
+                    } else if (block.kind === "always") {
+                        console.log("FOR always continuing, infinite loop");
+                        Queue.instVars.Current = block.startIndex;
+                    }
+                }
+            } else {
+                console.log("END without matching block, skipping");
+                Queue.instVars.Current++;
+            }
+        }
+        else {
+            console.log(`Unknown command: '${command}', skipping`);
+            Queue.instVars.Current++;
+        }
+    }
+}
+
+// Новая функция для проверки внешних циклов
+function checkOuterLoop(stack) {
+    if (stack.length > 0) {
+        const outerBlock = stack[stack.length - 1];
+        if (outerBlock.type === "while") {
+            // Возвращаемся к проверке условия внешнего while
+            Queue.instVars.Current = outerBlock.startIndex;
+        } else if (outerBlock.type === "for") {
+            // Возвращаемся к проверке условия внешнего for
+            Queue.instVars.Current = outerBlock.startIndex;
+        } else {
+            Queue.instVars.Current++;
+        }
+    } else {
+        Queue.instVars.Current++;
+    }
+}
+
+function skipToEnd(startIndex) {
+    console.log(`Skipping to end from index ${startIndex}`);
+    let depth = 1;
+    let current = startIndex + 1;
+    const queueLength = Queue.width;
+
+    while (current < queueLength && depth > 0) {
+        const rawCmd = Queue.getAt(current, 0);
+        const cmd = rawCmd.trim();
+        const firstPart = cmd.split('|')[0];
+        
+        if (firstPart === "while" || firstPart === "if" || firstPart === "for") {
+            depth++;
+        } else if (cmd === "end") {
+            depth--;
+        }
+        current++;
+    }
+
+    console.log(`Skipping to index ${current}`);
+    Queue.instVars.Current = current;
+}
+
+function findElse(startIndex) {
+    console.log(`Looking for ELSE from index ${startIndex}`);
+    let depth = 1;
+    let current = startIndex + 1;
+    const queueLength = Queue.width;
+
+    while (current < queueLength && depth > 0) {
+        const rawCmd = Queue.getAt(current, 0);
+        const cmd = rawCmd.trim();
+        const firstPart = cmd.split('|')[0];
+        
+        console.log(`Checking index ${current}: '${cmd}', depth: ${depth}`);
+        
+        if (firstPart === "while" || firstPart === "if" || firstPart === "for") {
+            depth++;
+            console.log(`Depth increased to ${depth}`);
+        } else if (cmd === "else" && depth === 1) {
+            console.log(`ELSE found at index ${current}`);
+            return current;
+        } else if (cmd === "end") {
+            depth--;
+            console.log(`Depth decreased to ${depth}`);
+        }
+        current++;
+    }
+
+    console.log("ELSE not found");
+    return -1;
+}
+
+async function executeCommand(runtime, command) {
+    switch (command) {
+        case "forward":
+            await forward();
+            break;
+        case "right":
+            await right();
+            break;
+        case "left":
+            await left();
+            break;
+    }
+    await wait(runtime, 500);
+}
+
+
+
+function shouldStopExecution(runtime) {
+    return !runtime.globalVars.IsBlocked || Cat.instVars.is_hit || Cat.instVars.is_win;
+}
+
+// Вспомогательная функция для ожидания с проверкой флага
+async function wait(runtime, ms) {
+    const start = Date.now();
+    while (Date.now() - start < ms / runtime.timeScale) {
+        if (shouldStopExecution(runtime)) return;
+        await new Promise(r => setTimeout(r, 10 / runtime.timeScale));
+    }
+}
+
+
+async function on_start(runtime) { runtime.addEventListener("tick", () => on_tick(runtime)); }
+
+
+export function on_init(runtime) {
+	Cat = runtime.objects.Cat.getFirstPickedInstance();
+	Arrow = runtime.objects.arrow.getFirstPickedInstance();
+	
+	Mapa = runtime.objects.Mapa.getFirstPickedInstance();
+	
+	Directions = runtime.objects.Directions.getFirstPickedInstance();
+	Condition = runtime.objects.Condition.getFirstPickedInstance();
+	Queue = runtime.objects.Queue.getFirstPickedInstance();
+}
+
+function on_tick(runtime) {}
