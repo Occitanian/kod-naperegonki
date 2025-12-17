@@ -13,13 +13,15 @@ runOnStartup(async runtime =>
 async function OnBeforeProjectStart(runtime)
 {
 	// Добавляем случайный параметр к URL при каждой загрузке
+	/*
 	if (window.location.search.indexOf("nocache") === -1) {
 		// Если параметра nocache ещё нет - добавляем
 		var newUrl = window.location.href + 
 					(window.location.search ? "&" : "?") + 
 					"nocache=" + Date.now();
 		window.location.replace(newUrl);
-}
+	
+}*/
 	
 	runtime.addEventListener("tick", () => Tick(runtime));
 }
