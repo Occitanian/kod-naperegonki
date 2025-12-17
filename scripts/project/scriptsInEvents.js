@@ -3,18 +3,6 @@
 
 const scriptsInEvents = {
 
-	async LoaderEvents_Event2_Act2(runtime, localVars)
-	{
-		// Добавляем случайный параметр к URL при каждой загрузке
-		if (window.location.search.indexOf("nocache") === -1) {
-		    // Если параметра nocache ещё нет - добавляем
-		    var newUrl = window.location.href + 
-		                (window.location.search ? "&" : "?") + 
-		                "nocache=" + Date.now();
-		    window.location.replace(newUrl);
-		}
-	},
-
 	async MenuEvents_Event107_Act2(runtime, localVars)
 	{
 		const Input = runtime.objects.Input.getFirstPickedInstance();

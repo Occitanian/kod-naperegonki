@@ -201,7 +201,6 @@ self.C3_GetObjectRefTable = function () {
 		C3.Plugins.System.Exps.find,
 		C3.Plugins.Arr.Exps.CurValue,
 		C3.Plugins.System.Exps.projectversion,
-		C3.ScriptsInEvents.LoaderEvents_Event2_Act2,
 		C3.Plugins.System.Cnds.OnLoadFinished,
 		C3.Plugins.Browser.Acts.RequestFullScreen,
 		C3.Plugins.Json.Acts.SetValue,
