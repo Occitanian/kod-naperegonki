@@ -2636,6 +2636,7 @@ self.C3_ExpressionFuncs = [
 		},
 		() => "White",
 		() => "Loader",
+		() => "Version",
 		() => "cats.Note",
 		() => "game.Note",
 		() => "game.Christmas",
