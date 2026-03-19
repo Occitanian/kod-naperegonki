@@ -2666,6 +2666,7 @@ self.C3_ExpressionFuncs = [
 			const f0 = p._GetNode(0).GetBoundMethod();
 			return () => f0("proglang");
 		},
+		() => "ProgLang",
 		() => "VictorySubscription",
 		() => "Напишите мне (разработчику), вам определённо полагается [color=orange]бонус[/color] за прохождение демо-версии ^-^",
 		() => "Name",
@@ -2900,7 +2901,6 @@ self.C3_ExpressionFuncs = [
 		() => "Music",
 		() => "CrossMusic",
 		() => -100,
-		() => "ProgLang",
 		() => "python",
 		() => "button",
 		() => "proglang",

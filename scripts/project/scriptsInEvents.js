@@ -137,22 +137,28 @@ function parseCommands(text) {
     const indentStack = [];
 
     lines.forEach(line => {
-        // Удаляем комментарии и хвостовые пробелы
-        line = line.replace(/#.*$/, '').trimRight();
-        if (line.trim() === '') return;
+        // 1. Предварительная очистка
+        const rawLine = line.replace(/#.*$/, ''); // Убираем комментарии
+        if (rawLine.trim() === '') return; // Пропускаем пустые строки
 
-        // Нормализуем табуляции в 4 пробела для точного подсчёта отступа
-        const normalizedLine = line.replace(/\t/g, '    ');
+        // 2. Считаем отступ (превращаем табы в 4 пробела для точности)
+        const normalizedLine = rawLine.replace(/\t/g, '    ');
         const indent = normalizedLine.search(/\S/);
-        const trimmed = line.trim();
+        const trimmed = rawLine.trim();
 
-        // Закрываем блоки, уровень которых **строго больше** текущего отступа
-        while (indentStack.length > 0 && indent < indentStack[indentStack.length - 1]) {
+        // 3. ЗАКРЫТИЕ БЛОКОВ (Главное исправление)
+        // Если текущий отступ МЕНЬШЕ ИЛИ РАВЕН последнему в стеке, 
+        // значит предыдущий блок на этом уровне (или глубже) закончился.
+        // Исключение: строки elif и else не должны закрывать свой собственный родительский if,
+        // они закрывают только предыдущее тело (if или elif).
+        while (indentStack.length > 0 && indent <= indentStack[indentStack.length - 1]) {
+            // Проверка: если это elif/else, они "наследуют" уровень if, 
+            // поэтому мы закрываем только содержимое предыдущей ветки.
             commands.push('end');
             indentStack.pop();
         }
 
-        // --- Определяем тип строки ---
+        // 4. ОПРЕДЕЛЕНИЕ КОМАНД
 
         // for i in range(N):
         const forMatch = trimmed.match(/^for\s+\w+\s+in\s+range\s*\(\s*(\d+)\s*\)\s*:?\s*$/i);
@@ -162,24 +168,21 @@ function parseCommands(text) {
             return;
         }
 
-        // while True: / while False:
+        // while True / while False
         const whileBoolMatch = trimmed.match(/^while\s+(true|false)\s*:\s*$/i);
         if (whileBoolMatch) {
-            const boolVal = whileBoolMatch[1].toLowerCase();
-            commands.push(`while|always|${boolVal}`);
+            commands.push(`while|always|${whileBoolMatch[1].toLowerCase()}`);
             indentStack.push(indent);
             return;
         }
 
-        // while условие: while on_right(free):
+        // while условие:
         const whileCondMatch = trimmed.match(/^while\s+([a-z_]+)\(\s*(free|wall)\s*\)\s*:\s*$/i);
         if (whileCondMatch) {
-            const direction = whileCondMatch[1];
-            const condition = whileCondMatch[2];
-            const absoluteDirs = ['north', 'south', 'east', 'west'];
-            const relativeDirs = ['front', 'behind', 'on_left', 'on_right'];
-            let type = absoluteDirs.includes(direction.toLowerCase()) ? 'absolute' : 'relative';
-            commands.push(`while|${type}|${direction}|${condition}`);
+            const dir = whileCondMatch[1];
+            const cond = whileCondMatch[2];
+            const type = ['north', 'south', 'east', 'west'].includes(dir.toLowerCase()) ? 'absolute' : 'relative';
+            commands.push(`while|${type}|${dir}|${cond}`);
             indentStack.push(indent);
             return;
         }
@@ -187,12 +190,10 @@ function parseCommands(text) {
         // if условие:
         const ifMatch = trimmed.match(/^if\s+([a-z_]+)\(\s*(free|wall)\s*\)\s*:\s*$/i);
         if (ifMatch) {
-            const direction = ifMatch[1];
-            const condition = ifMatch[2];
-            const absoluteDirs = ['north', 'south', 'east', 'west'];
-            const relativeDirs = ['front', 'behind', 'on_left', 'on_right'];
-            let type = absoluteDirs.includes(direction.toLowerCase()) ? 'absolute' : 'relative';
-            commands.push(`if|${type}|${direction}|${condition}`);
+            const dir = ifMatch[1];
+            const cond = ifMatch[2];
+            const type = ['north', 'south', 'east', 'west'].includes(dir.toLowerCase()) ? 'absolute' : 'relative';
+            commands.push(`if|${type}|${dir}|${cond}`);
             indentStack.push(indent);
             return;
         }
@@ -200,13 +201,11 @@ function parseCommands(text) {
         // elif условие:
         const elifMatch = trimmed.match(/^elif\s+([a-z_]+)\(\s*(free|wall)\s*\)\s*:\s*$/i);
         if (elifMatch) {
-            const direction = elifMatch[1];
-            const condition = elifMatch[2];
-            const absoluteDirs = ['north', 'south', 'east', 'west'];
-            const relativeDirs = ['front', 'behind', 'on_left', 'on_right'];
-            let type = absoluteDirs.includes(direction.toLowerCase()) ? 'absolute' : 'relative';
-            commands.push(`elif|${type}|${direction}|${condition}`);
-            // Не добавляем в стек — уровень не меняется
+            const dir = elifMatch[1];
+            const cond = elifMatch[2];
+            const type = ['north', 'south', 'east', 'west'].includes(dir.toLowerCase()) ? 'absolute' : 'relative';
+            commands.push(`elif|${type}|${dir}|${cond}`);
+            indentStack.push(indent); // Теперь добавляем в стек, чтобы закрыть потом
             return;
         }
 
@@ -214,7 +213,7 @@ function parseCommands(text) {
         const elseMatch = trimmed.match(/^else\s*:\s*$/i);
         if (elseMatch) {
             commands.push('else');
-            // Не добавляем в стек
+            indentStack.push(indent); // Теперь добавляем в стек
             return;
         }
 
@@ -225,11 +224,10 @@ function parseCommands(text) {
             return;
         }
 
-        // Если ничего не распознано
-        console.warn('Неизвестная команда (пропущена):', trimmed);
+        console.warn('Неизвестная строка:', trimmed);
     });
 
-    // Закрываем все оставшиеся блоки в конце
+    // Финальное закрытие всех открытых блоков
     while (indentStack.length > 0) {
         commands.push('end');
         indentStack.pop();
@@ -240,36 +238,30 @@ function parseCommands(text) {
 
 const cmdList = parseCommands(code);
 
-// Устанавливаем размер
+// Обновляем Queue
 queueObj.setSize(cmdList.length, 3);
-console.log(`Размер массива Queue установлен: ${cmdList.length} x 3`);
 
-// Заполняем массив
 cmdList.forEach((cmd, index) => {
     let type = 'lineal';
-    if (cmd.startsWith('for|') || cmd.startsWith('if|') || cmd.startsWith('while|') || cmd.startsWith('elif|')) {
+    
+    // Определяем тип для Queue
+    if (cmd.startsWith('for|') || cmd.startsWith('if|') || cmd.startsWith('while|') || cmd.startsWith('elif|') || cmd === 'else') {
         type = 'cycle';
     } else if (cmd === 'end') {
         type = 'end';
-    } else {
-        // для else и обычных команд
-        type = 'lineal';
     }
 
-    try {
-        queueObj.setAt(cmd, index, 0);
-        queueObj.setAt(type, index, 1);
-        queueObj.setAt(-1, index, 2);
-        console.log(`  Установлено [${index},0] = "${cmd}", [${index},1] = "${type}", [${index},2] = -1`);
-    } catch (e) {
-        console.error(`  Ошибка при установке значения для index=${index}:`, e);
-    }
+    queueObj.setAt(cmd, index, 0);
+    queueObj.setAt(type, index, 1);
+    queueObj.setAt(-1, index, 2);
+    
+    console.log(`[${index}] CMD: ${cmd} | TYPE: ${type}`);
 });
 
 console.log('Queue обновлён, команд:', cmdList.length);
 	},
 
-	async MenuEvents_Event110_Act2(runtime, localVars)
+	async MenuEvents_Event111_Act2(runtime, localVars)
 	{
 		const Input = runtime.objects.Input.getFirstPickedInstance();
 		
@@ -290,7 +282,7 @@ console.log('Queue обновлён, команд:', cmdList.length);
 		})(Input.text);
 	},
 
-	async MenuEvents_Event111_Act1(runtime, localVars)
+	async MenuEvents_Event112_Act1(runtime, localVars)
 	{
 		let CatSay = runtime.objects.Aqum.getFirstPickedInstance().instVars.Say;
 		
