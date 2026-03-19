@@ -130,132 +130,128 @@ if (!iframeWin || !iframeWin.getCode) {
 }
 const code = iframeWin.getCode();
 
-
 function parseCommands(text) {
     const lines = text.split('\n');
     const commands = [];
     const indentStack = [];
+    let currentDepth = 0;
 
     lines.forEach(line => {
-        // 1. Предварительная очистка
-        const rawLine = line.replace(/#.*$/, ''); // Убираем комментарии
-        if (rawLine.trim() === '') return; // Пропускаем пустые строки
+        const rawLine = line.replace(/#.*$/, '');
+        if (rawLine.trim() === '') return;
 
-        // 2. Считаем отступ (превращаем табы в 4 пробела для точности)
         const normalizedLine = rawLine.replace(/\t/g, '    ');
         const indent = normalizedLine.search(/\S/);
         const trimmed = rawLine.trim();
 
-        // 3. ЗАКРЫТИЕ БЛОКОВ (Главное исправление)
-        // Если текущий отступ МЕНЬШЕ ИЛИ РАВЕН последнему в стеке, 
-        // значит предыдущий блок на этом уровне (или глубже) закончился.
-        // Исключение: строки elif и else не должны закрывать свой собственный родительский if,
-        // они закрывают только предыдущее тело (if или elif).
-        while (indentStack.length > 0 && indent <= indentStack[indentStack.length - 1]) {
-            // Проверка: если это elif/else, они "наследуют" уровень if, 
-            // поэтому мы закрываем только содержимое предыдущей ветки.
-            commands.push('end');
-            indentStack.pop();
+        const isElif = /^elif\s+/i.test(trimmed);
+        const isElse = /^else\s*:/i.test(trimmed);
+
+        // --- ЛОГИКА ЗАКРЫТИЯ БЛОКОВ ---
+        while (indentStack.length > 0) {
+            const lastIndent = indentStack[indentStack.length - 1].indent;
+            
+            // Если мы ушли левее ИЛИ мы на том же уровне, но это новая команда (не elif/else)
+            if (indent < lastIndent || (indent === lastIndent && !isElif && !isElse)) {
+                const last = indentStack.pop();
+                for (let i = 0; i < last.openedCount; i++) {
+                    commands.push({ cmd: 'end', type: 'end', depth: currentDepth });
+                    currentDepth--;
+                }
+            } else {
+                break; 
+            }
         }
 
-        // 4. ОПРЕДЕЛЕНИЕ КОМАНД
+        const addCmd = (cmd, type) => {
+            commands.push({ cmd, type, depth: currentDepth });
+        };
 
-        // for i in range(N):
+        // WHILE
+        const whileMatch = trimmed.match(/^while\s+(true|false|[a-z_]+\(.*\))\s*:\s*$/i);
+        if (whileMatch) {
+            let cmdStr = "";
+            if (whileMatch[1].toLowerCase() === "true" || whileMatch[1].toLowerCase() === "false") {
+                cmdStr = `while|always|${whileMatch[1].toLowerCase()}`;
+            } else {
+                const cond = whileMatch[1].match(/([a-z_]+)\(\s*(free|wall)\s*\)/i);
+                const type = ['north', 'south', 'east', 'west'].includes(cond[1].toLowerCase()) ? 'absolute' : 'relative';
+                cmdStr = `while|${type}|${cond[1]}|${cond[2]}`;
+            }
+            currentDepth++;
+            addCmd(cmdStr, 'cycle');
+            indentStack.push({ indent: indent, openedCount: 1 });
+            return;
+        }
+
+        // FOR
         const forMatch = trimmed.match(/^for\s+\w+\s+in\s+range\s*\(\s*(\d+)\s*\)\s*:?\s*$/i);
         if (forMatch) {
-            commands.push(`for|count|${forMatch[1]}`);
-            indentStack.push(indent);
+            currentDepth++;
+            addCmd(`for|count|${forMatch[1]}`, 'cycle');
+            indentStack.push({ indent: indent, openedCount: 1 });
             return;
         }
 
-        // while True / while False
-        const whileBoolMatch = trimmed.match(/^while\s+(true|false)\s*:\s*$/i);
-        if (whileBoolMatch) {
-            commands.push(`while|always|${whileBoolMatch[1].toLowerCase()}`);
-            indentStack.push(indent);
-            return;
-        }
-
-        // while условие:
-        const whileCondMatch = trimmed.match(/^while\s+([a-z_]+)\(\s*(free|wall)\s*\)\s*:\s*$/i);
-        if (whileCondMatch) {
-            const dir = whileCondMatch[1];
-            const cond = whileCondMatch[2];
-            const type = ['north', 'south', 'east', 'west'].includes(dir.toLowerCase()) ? 'absolute' : 'relative';
-            commands.push(`while|${type}|${dir}|${cond}`);
-            indentStack.push(indent);
-            return;
-        }
-
-        // if условие:
+        // IF
         const ifMatch = trimmed.match(/^if\s+([a-z_]+)\(\s*(free|wall)\s*\)\s*:\s*$/i);
         if (ifMatch) {
-            const dir = ifMatch[1];
-            const cond = ifMatch[2];
-            const type = ['north', 'south', 'east', 'west'].includes(dir.toLowerCase()) ? 'absolute' : 'relative';
-            commands.push(`if|${type}|${dir}|${cond}`);
-            indentStack.push(indent);
+            const type = ['north', 'south', 'east', 'west'].includes(ifMatch[1].toLowerCase()) ? 'absolute' : 'relative';
+            currentDepth++;
+            addCmd(`if|${type}|${ifMatch[1]}|${ifMatch[2]}`, 'cycle');
+            indentStack.push({ indent: indent, openedCount: 1 });
             return;
         }
 
-        // elif условие:
+        // ELIF (превращаем в else + if)
         const elifMatch = trimmed.match(/^elif\s+([a-z_]+)\(\s*(free|wall)\s*\)\s*:\s*$/i);
         if (elifMatch) {
-            const dir = elifMatch[1];
-            const cond = elifMatch[2];
-            const type = ['north', 'south', 'east', 'west'].includes(dir.toLowerCase()) ? 'absolute' : 'relative';
-            commands.push(`elif|${type}|${dir}|${cond}`);
-            indentStack.push(indent); // Теперь добавляем в стек, чтобы закрыть потом
+            addCmd('else', 'lineal'); 
+            currentDepth++;
+            const type = ['north', 'south', 'east', 'west'].includes(elifMatch[1].toLowerCase()) ? 'absolute' : 'relative';
+            addCmd(`if|${type}|${elifMatch[1]}|${elifMatch[2]}`, 'cycle');
+            
+            // Важно: увеличиваем количество открытых структур для ТЕКУЩЕГО уровня отступа
+            if (indentStack.length > 0) {
+                indentStack[indentStack.length - 1].openedCount++;
+            }
             return;
         }
 
-        // else:
-        const elseMatch = trimmed.match(/^else\s*:\s*$/i);
-        if (elseMatch) {
-            commands.push('else');
-            indentStack.push(indent); // Теперь добавляем в стек
+        // ELSE
+        if (isElse) {
+            addCmd('else', 'lineal');
             return;
         }
 
-        // Обычная команда вида forward()
+        // Команды
         const cmdMatch = trimmed.match(/^([a-zA-Z_]+)\s*\(\s*\)\s*$/);
         if (cmdMatch) {
-            commands.push(cmdMatch[1]);
+            addCmd(cmdMatch[1], 'lineal');
             return;
         }
-
-        console.warn('Неизвестная строка:', trimmed);
     });
 
-    // Финальное закрытие всех открытых блоков
+    // Финал
     while (indentStack.length > 0) {
-        commands.push('end');
-        indentStack.pop();
+        const last = indentStack.pop();
+        for (let i = 0; i < last.openedCount; i++) {
+            commands.push({ cmd: 'end', type: 'end', depth: currentDepth });
+            currentDepth--;
+        }
     }
-
     return commands;
 }
 
+// --- ОБНОВЛЕНИЕ QUEUE В CONSTRUCT 3 ---
 const cmdList = parseCommands(code);
-
-// Обновляем Queue
 queueObj.setSize(cmdList.length, 3);
 
-cmdList.forEach((cmd, index) => {
-    let type = 'lineal';
-    
-    // Определяем тип для Queue
-    if (cmd.startsWith('for|') || cmd.startsWith('if|') || cmd.startsWith('while|') || cmd.startsWith('elif|') || cmd === 'else') {
-        type = 'cycle';
-    } else if (cmd === 'end') {
-        type = 'end';
-    }
-
-    queueObj.setAt(cmd, index, 0);
-    queueObj.setAt(type, index, 1);
-    queueObj.setAt(-1, index, 2);
-    
-    console.log(`[${index}] CMD: ${cmd} | TYPE: ${type}`);
+cmdList.forEach((item, index) => {
+    queueObj.setAt(item.cmd, index, 0);
+    queueObj.setAt(item.type, index, 1);
+    queueObj.setAt(item.depth, index, 2);
+    console.log(`[${index}] ${item.cmd},${item.type},${item.depth}`);
 });
 
 console.log('Queue обновлён, команд:', cmdList.length);
