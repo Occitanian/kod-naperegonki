@@ -1,0 +1,398 @@
+
+
+const scriptsInEvents = {
+
+	async MenuEvents_Event119_Act2(runtime, localVars)
+	{
+		const Input = runtime.objects.Input.getFirstPickedInstance();
+		
+		Input.text = (function(input) {
+		    // Разрешаем все буквы (включая ё/Ё), дефис и пробел
+		    let cleaned = input.replace(/[^a-zA-Zа-яА-ЯёЁ\- ]/g, '');
+		    
+		    // Заменяем множественные пробелы на один
+		    cleaned = cleaned.replace(/\s{2,}/g, ' ');
+		    
+		    // Убираем пробелы в начале и конце
+		    cleaned = cleaned.trim();
+		    
+		    // Преобразуем всё в верхний регистр
+		    cleaned = cleaned.toUpperCase();
+		    
+			return cleaned;
+		})(Input.text);
+	},
+
+	async MenuEvents_Event120_Act1(runtime, localVars)
+	{
+		let CatSay = runtime.objects.Aqum.getFirstPickedInstance().instVars.Say;
+		
+		const BadwordsMap = runtime.objects.Badwords.getFirstPickedInstance().getDataMap(); // Переименовал переменную, чтобы подчеркнуть, что это Map
+		const Input = runtime.objects.Input.getFirstPickedInstance();
+		
+		const inputTextLower = Input.text.toLowerCase(); // Преобразуем введенный текст в нижний регистр
+		
+		let foundBadWord = false; // Флаг для отслеживания, найдено ли плохое слово
+		
+		if (BadwordsMap) {
+		  for (const [key, value] of BadwordsMap) {
+		    if (inputTextLower.includes(key.toLowerCase())) { // Сравниваем в нижнем регистре, используя includes
+		      CatSay = value;
+		      Input.text = "";  // Очищаем поле ввода
+		      foundBadWord = true;
+		      break; // Прерываем цикл, если нашли первое совпадение
+		    }
+		  }
+		} else {
+		  console.warn("Словарь Badwords пуст или не найден.");
+		}
+		
+		if (!foundBadWord) {
+		  localVars.cat_name = Input.text;
+		}
+		
+		runtime.objects.Aqum.getFirstPickedInstance().instVars.Say = CatSay;
+	},
+
+	async GameEvents_Event269_Act1(runtime, localVars)
+	{
+const CodeIframe = runtime.objects.CodeIframe.getFirstInstance();
+const theme = localVars.theme; // "light" или "dark"
+
+let bgColor, textColor, cursorColor;
+if (theme === 'light') {
+    bgColor = 'rgb(255, 255, 200)';   // светло-жёлтый
+    textColor = '#000000';            // чёрный текст
+    cursorColor = '#000000';          // чёрный курсор
+} else {
+    bgColor = 'rgb(25, 25, 25)';      // тёмно-серый
+    textColor = '#ffffff';            // белый текст
+    cursorColor = '#ffffff';          // белый курсор
+}
+
+const htmlContent = `<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/darcula.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+<style>
+  body, html { margin:0; padding:0; height:100%; overflow:hidden; background: ${bgColor}; }
+  
+  /* Основной контейнер */
+  .CodeMirror { 
+    height:100%; 
+    font-size:16px; 
+    background: ${bgColor} !important; 
+    color: ${textColor} !important; 
+  }
+
+  /* Перебиваем тему Darcula для фона и текста */
+  .cm-s-darcula.CodeMirror { background: ${bgColor} !important; color: ${textColor} !important; }
+  .cm-s-darcula .CodeMirror-gutters { background: ${bgColor} !important; border-right: 1px solid rgba(128,128,128,0.3); }
+  .cm-s-darcula .CodeMirror-linenumber { color: ${textColor} !important; opacity: 0.6; }
+  .cm-s-darcula .CodeMirror-cursor { border-left: 2px solid ${cursorColor} !important; }
+
+  /* Текст обычный и переменные (Исправлено: убрал дубликат) */
+  .cm-s-darcula .CodeMirror-line { color: ${textColor} !important; }
+  .cm-variable { color: ${theme === 'light' ? '#333333' : '#abb2bf'} !important; }
+
+  /* Твои ключевые слова */
+  .cm-for { color: rgb(0, 110, 255) !important; font-weight: bold; }
+  .cm-while { color: rgb(30, 144, 255) !important; font-weight: bold; }
+  .cm-if, .cm-elif { color: rgb(65, 105, 255) !important; font-weight: bold; }
+  .cm-else { color: rgb(200, 0, 0) !important; font-weight: bold; }
+
+  /* Твои команды движения */
+  .cm-forward { color: rgb(50, 50, 255) !important; font-weight: bold; }
+  .cm-left { color: rgb(255, 75, 0) !important; font-weight: bold; }
+  .cm-right { color: rgb(0, 128, 0) !important; font-weight: bold; }
+
+  /* Остальное */
+  .cm-builtin { color: #e06c75 !important; }
+  .cm-atom { color: #CD29D1 !important; font-weight: bold !important }
+  .cm-number { color: #98c379 !important; }
+  .cm-bracket { color: #56b6c2 !important; font-weight: bold; }
+  .cm-comment { color: #5c6370 !important; font-style: italic !important; }
+
+  .cm-s-darcula .CodeMirror-activeline-background { background: rgba(255, 255, 255, 0.1) !important; }
+</style>
+</head>
+<body>
+<textarea id="code"># Код писать здесь ^-^</textarea>
+<script>
+CodeMirror.defineMode("kittyscript", function() {
+  const keywords = ["for", "while", "if", "elif", "else"];
+  const atoms = ["north", "south", "east", "west", "front", "behind", "on_left", "on_right", "free", "wall", "true", "false"];
+  const builtins = ["forward", "left", "right"];
+
+  return {
+    token: function(stream, state) {
+      if (stream.eatSpace()) return null;
+      if (stream.match(/^#.*/)) return "comment";
+      if (stream.match(/^[a-zA-Z_][a-zA-Z0-9_]*/)) {
+        const word = stream.current();
+        if (keywords.includes(word)) return word;
+        if (atoms.includes(word)) return "atom";
+        if (word === "forward") return "forward";
+        if (word === "left") return "left";
+        if (word === "right") return "right";
+        if (builtins.includes(word)) return "builtin";
+        return "variable";
+      }
+      if (stream.match(/^\d+/)) return "number";
+      if (stream.match(/^[()]/)) return "bracket";
+      stream.next();
+      return null;
+    }
+  };
+});
+
+var editor = CodeMirror.fromTextArea(document.getElementById('code'), {
+  lineNumbers: true,
+  mode: 'kittyscript',
+  theme: 'darcula',
+  indentUnit: 4,
+  autoCloseBrackets: true,
+  matchBrackets: true,
+  lineWrapping: true
+});
+
+window.getCode = () => editor.getValue();
+window.setCode = code => editor.setValue(code);
+<\/script>
+</body>
+</html>`;
+
+runtime.callFunction("SetIframeHTML", CodeIframe.uid, htmlContent);
+	},
+
+	async GameEvents_Event270_Act2(runtime, localVars)
+	{
+// Получаем iframe и код из редактора
+const iframeObj = runtime.objects.CodeIframe.getFirstInstance();
+const iframeWin = CodeIframe.contentWindow.window;
+
+const queueObj = runtime.objects.Queue.getFirstInstance();
+
+if (!iframeWin || !iframeWin.getCode) {
+    console.log('Редактор ещё не загружен');
+    return;
+}
+const code = iframeWin.getCode();
+
+function parseCommands(text) {
+    const lines = text.split('\n');
+    const commands = [];
+    const indentStack = [];
+    let currentDepth = 0;
+
+    lines.forEach(line => {
+        const rawLine = line.replace(/#.*$/, '');
+        if (rawLine.trim() === '') return;
+
+        const normalizedLine = rawLine.replace(/\t/g, '    ');
+        const indent = normalizedLine.search(/\S/);
+        const trimmed = rawLine.trim();
+
+        const isElif = /^elif\s+/i.test(trimmed);
+        const isElse = /^else\s*:/i.test(trimmed);
+
+        // --- ЛОГИКА ЗАКРЫТИЯ БЛОКОВ ---
+        while (indentStack.length > 0) {
+            const lastIndent = indentStack[indentStack.length - 1].indent;
+            
+            // Если мы ушли левее ИЛИ мы на том же уровне, но это новая команда (не elif/else)
+            if (indent < lastIndent || (indent === lastIndent && !isElif && !isElse)) {
+                const last = indentStack.pop();
+                for (let i = 0; i < last.openedCount; i++) {
+                    commands.push({ cmd: 'end', type: 'end', depth: currentDepth });
+                    currentDepth--;
+                }
+            } else {
+                break; 
+            }
+        }
+
+        const addCmd = (cmd, type) => {
+            commands.push({ cmd, type, depth: currentDepth });
+        };
+
+        // WHILE
+        const whileMatch = trimmed.match(/^while\s+(true|false|[a-z_]+\(.*\))\s*:\s*$/i);
+        if (whileMatch) {
+            let cmdStr = "";
+            if (whileMatch[1].toLowerCase() === "true" || whileMatch[1].toLowerCase() === "false") {
+                cmdStr = `while|always|${whileMatch[1].toLowerCase()}`;
+            } else {
+                const cond = whileMatch[1].match(/([a-z_]+)\(\s*(free|wall)\s*\)/i);
+                const type = ['north', 'south', 'east', 'west'].includes(cond[1].toLowerCase()) ? 'absolute' : 'relative';
+                cmdStr = `while|${type}|${cond[1]}|${cond[2]}`;
+            }
+            currentDepth++;
+            addCmd(cmdStr, 'cycle');
+            indentStack.push({ indent: indent, openedCount: 1 });
+            return;
+        }
+
+        // FOR
+        const forMatch = trimmed.match(/^for\s+\w+\s+in\s+range\s*\(\s*(\d+)\s*\)\s*:?\s*$/i);
+        if (forMatch) {
+            currentDepth++;
+            addCmd(`for|count|${forMatch[1]}`, 'cycle');
+            indentStack.push({ indent: indent, openedCount: 1 });
+            return;
+        }
+
+        // IF
+        const ifMatch = trimmed.match(/^if\s+([a-z_]+)\(\s*(free|wall)\s*\)\s*:\s*$/i);
+        if (ifMatch) {
+            const type = ['north', 'south', 'east', 'west'].includes(ifMatch[1].toLowerCase()) ? 'absolute' : 'relative';
+            currentDepth++;
+            addCmd(`if|${type}|${ifMatch[1]}|${ifMatch[2]}`, 'cycle');
+            indentStack.push({ indent: indent, openedCount: 1 });
+            return;
+        }
+
+        // ELIF (превращаем в else + if)
+        const elifMatch = trimmed.match(/^elif\s+([a-z_]+)\(\s*(free|wall)\s*\)\s*:\s*$/i);
+        if (elifMatch) {
+            addCmd('else', 'lineal'); 
+            currentDepth++;
+            const type = ['north', 'south', 'east', 'west'].includes(elifMatch[1].toLowerCase()) ? 'absolute' : 'relative';
+            addCmd(`if|${type}|${elifMatch[1]}|${elifMatch[2]}`, 'cycle');
+            
+            // Важно: увеличиваем количество открытых структур для ТЕКУЩЕГО уровня отступа
+            if (indentStack.length > 0) {
+                indentStack[indentStack.length - 1].openedCount++;
+            }
+            return;
+        }
+
+        // ELSE
+        if (isElse) {
+            addCmd('else', 'lineal');
+            return;
+        }
+
+        // Команды
+        const cmdMatch = trimmed.match(/^([a-zA-Z_]+)\s*\(\s*\)\s*$/);
+        if (cmdMatch) {
+            addCmd(cmdMatch[1], 'lineal');
+            return;
+        }
+    });
+
+    // Финал
+    while (indentStack.length > 0) {
+        const last = indentStack.pop();
+        for (let i = 0; i < last.openedCount; i++) {
+            commands.push({ cmd: 'end', type: 'end', depth: currentDepth });
+            currentDepth--;
+        }
+    }
+    return commands;
+}
+
+// --- ОБНОВЛЕНИЕ QUEUE В CONSTRUCT 3 ---
+const cmdList = parseCommands(code);
+queueObj.setSize(cmdList.length, 3);
+
+cmdList.forEach((item, index) => {
+    queueObj.setAt(item.cmd, index, 0);
+    queueObj.setAt(item.type, index, 1);
+    queueObj.setAt(item.depth, index, 2);
+    console.log(`[${index}] ${item.cmd},${item.type},${item.depth}`);
+});
+
+console.log('Queue обновлён, команд:', cmdList.length);
+	},
+
+	async GameEvents_Event280_Act2(runtime, localVars)
+	{
+		console.log(localVars.our_code);
+		
+		// Функция для имитации печати ИИ
+		const iframeObj = runtime.objects.CodeIframe.getFirstInstance();
+		const iframeWin = CodeIframe.contentWindow.window;
+		
+		// Функция для имитации печати ИИ
+		async function typeCodeInEditor(fullCode) {
+		
+		    let currentText = "";
+		    const delay = 20; // Скорость печати (мс). Увеличь, если нужно медленнее.
+		
+		    // Очищаем старый текст перед началом
+		    iframeWin.setCode("");
+		
+		    for (let i = 0; i < fullCode.length; i++) {
+		        currentText += fullCode[i];
+		        iframeWin.setCode(currentText);
+		        
+		        // Ждем небольшую паузу перед следующей буквой
+		        await new Promise(resolve => setTimeout(resolve, delay));
+		        
+		        // Авто-прокрутка вниз, если кода много
+		        if (iframeWin.editor) {
+		            iframeWin.editor.setCursor(iframeWin.editor.lineCount(), 0);
+		        }
+		    }
+		}
+		
+		let aiGeneratedCode = localVars.our_code;
+		
+		const mapa = runtime.objects.Mapa.getFirstPickedInstance();
+		
+		function getTilemapArray() {
+		    // 1. Находим объект Tilemap (замени "Tilemap" на точное имя своего объекта)
+		    const tilemap = mapa;
+		    
+		    // 2. Получаем размеры карты в тайлах
+		    const width = tilemap.mapWidth;
+		    const height = tilemap.mapHeight;
+		    
+		    const matrix = [];
+		
+		    for (let y = 0; y < height; y++) {
+		        const row = [];
+		        for (let x = 0; x < width; x++) {
+		            // 3. Получаем значение тайла
+		            const tileValue = tilemap.getTileAt(x, y);
+		            
+		            // 4. Логика: если тайл -1 (пусто), то это 0 (путь)
+		            // Если там что-то есть, то это 1 (стена)
+		            if (tileValue === -1) {
+		                row.push(0);
+		            } else {
+		                // Если нужно проверять конкретный ID тайла, используй маску:
+		                // const tileID = tileValue & tilemap.constructor.TILE_ID_MASK;
+		                row.push(1); 
+		            }
+		        }
+		        matrix.push(row);
+		    }
+		
+		    return matrix;
+		}
+		
+		
+		const cat = runtime.objects.Cat.getFirstPickedInstance();
+		const sausage = runtime.objects.Sausage.getFirstPickedInstance();
+		
+		
+		// ПРИМЕР ИСПОЛЬЗОВАНИЯ:
+		let mapData = getTilemapArray();
+		
+		mapData[cat.instVars.ToY][cat.instVars.ToX] = 2;
+		mapData[sausage.instVars.ToY][sausage.instVars.ToX] = 3;
+		
+		console.log("Карта для ИИ:", JSON.stringify(mapData));
+		
+		
+		// Запускаем печать
+		typeCodeInEditor(aiGeneratedCode);
+		
+	}
+};
+
+globalThis.C3.JavaScriptInEvents = scriptsInEvents;
