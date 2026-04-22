@@ -2,7 +2,7 @@
 
 const scriptsInEvents = {
 
-	async MenuEvents_Event119_Act2(runtime, localVars)
+	async MenuEvents_Event123_Act2(runtime, localVars)
 	{
 		const Input = runtime.objects.Input.getFirstPickedInstance();
 		
@@ -23,7 +23,7 @@ const scriptsInEvents = {
 		})(Input.text);
 	},
 
-	async MenuEvents_Event120_Act1(runtime, localVars)
+	async MenuEvents_Event124_Act1(runtime, localVars)
 	{
 		let CatSay = runtime.objects.Aqum.getFirstPickedInstance().instVars.Say;
 		
@@ -54,7 +54,7 @@ const scriptsInEvents = {
 		runtime.objects.Aqum.getFirstPickedInstance().instVars.Say = CatSay;
 	},
 
-	async GameEvents_Event269_Act1(runtime, localVars)
+	async GameEvents_Event267_Act1(runtime, localVars)
 	{
 const CodeIframe = runtime.objects.CodeIframe.getFirstInstance();
 const theme = localVars.theme; // "light" или "dark"
@@ -167,7 +167,7 @@ window.setCode = code => editor.setValue(code);
 runtime.callFunction("SetIframeHTML", CodeIframe.uid, htmlContent);
 	},
 
-	async GameEvents_Event270_Act2(runtime, localVars)
+	async GameEvents_Event268_Act2(runtime, localVars)
 	{
 // Получаем iframe и код из редактора
 const iframeObj = runtime.objects.CodeIframe.getFirstInstance();
@@ -308,7 +308,7 @@ cmdList.forEach((item, index) => {
 console.log('Queue обновлён, команд:', cmdList.length);
 	},
 
-	async GameEvents_Event280_Act2(runtime, localVars)
+	async GameEvents_Event278_Act2(runtime, localVars)
 	{
 		console.log(localVars.our_code);
 		
