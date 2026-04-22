@@ -2,7 +2,7 @@
 
 const scriptsInEvents = {
 
-	async MenuEvents_Event123_Act2(runtime, localVars)
+	async MenuEvents_Event122_Act2(runtime, localVars)
 	{
 		const Input = runtime.objects.Input.getFirstPickedInstance();
 		
@@ -23,7 +23,7 @@ const scriptsInEvents = {
 		})(Input.text);
 	},
 
-	async MenuEvents_Event124_Act1(runtime, localVars)
+	async MenuEvents_Event123_Act1(runtime, localVars)
 	{
 		let CatSay = runtime.objects.Aqum.getFirstPickedInstance().instVars.Say;
 		

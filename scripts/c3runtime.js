@@ -2922,6 +2922,7 @@ self.C3_ExpressionFuncs = [
 			const n0 = p._GetNode(0);
 			return () => (("[color=limegreen]" + n0.ExpObject()) + "?[/color] Хммм... ну ладно");
 		},
+		() => -3,
 		() => "General",
 		p => {
 			const f0 = p._GetNode(0).GetBoundMethod();
