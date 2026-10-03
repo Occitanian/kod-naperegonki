@@ -2,59 +2,21 @@
 
 const scriptsInEvents = {
 
-	async MenuEvents_Event122_Act2(runtime, localVars)
+	async General_Event31_Act1(runtime, localVars)
 	{
-		const Input = runtime.objects.Input.getFirstPickedInstance();
+		const skin = runtime.objects.themes.getFirstInstance().instVars.current_theme;
 		
-		Input.text = (function(input) {
-		    // Разрешаем все буквы (включая ё/Ё), дефис и пробел
-		    let cleaned = input.replace(/[^a-zA-Zа-яА-ЯёЁ\- ]/g, '');
-		    
-		    // Заменяем множественные пробелы на один
-		    cleaned = cleaned.replace(/\s{2,}/g, ' ');
-		    
-		    // Убираем пробелы в начале и конце
-		    cleaned = cleaned.trim();
-		    
-		    // Преобразуем всё в верхний регистр
-		    cleaned = cleaned.toUpperCase();
-		    
-			return cleaned;
-		})(Input.text);
+		
+		for (const inst of runtime.objects.Text.instances())
+		{
+		    inst.text = inst.text.replaceAll(
+		    /\[icon=([a-zA-Z0-9_]+)-[a-zA-Z0-9_]+\]/g,
+		    "[icon=$1-" + skin + "]"
+		);
+		}
 	},
 
-	async MenuEvents_Event123_Act1(runtime, localVars)
-	{
-		let CatSay = runtime.objects.Aqum.getFirstPickedInstance().instVars.Say;
-		
-		const BadwordsMap = runtime.objects.Badwords.getFirstPickedInstance().getDataMap(); // Переименовал переменную, чтобы подчеркнуть, что это Map
-		const Input = runtime.objects.Input.getFirstPickedInstance();
-		
-		const inputTextLower = Input.text.toLowerCase(); // Преобразуем введенный текст в нижний регистр
-		
-		let foundBadWord = false; // Флаг для отслеживания, найдено ли плохое слово
-		
-		if (BadwordsMap) {
-		  for (const [key, value] of BadwordsMap) {
-		    if (inputTextLower.includes(key.toLowerCase())) { // Сравниваем в нижнем регистре, используя includes
-		      CatSay = value;
-		      Input.text = "";  // Очищаем поле ввода
-		      foundBadWord = true;
-		      break; // Прерываем цикл, если нашли первое совпадение
-		    }
-		  }
-		} else {
-		  console.warn("Словарь Badwords пуст или не найден.");
-		}
-		
-		if (!foundBadWord) {
-		  localVars.cat_name = Input.text;
-		}
-		
-		runtime.objects.Aqum.getFirstPickedInstance().instVars.Say = CatSay;
-	},
-
-	async GameEvents_Event267_Act1(runtime, localVars)
+	async GameEvents_Event263_Act1(runtime, localVars)
 	{
 const CodeIframe = runtime.objects.CodeIframe.getFirstInstance();
 const theme = localVars.theme; // "light" или "dark"
@@ -167,7 +129,7 @@ window.setCode = code => editor.setValue(code);
 runtime.callFunction("SetIframeHTML", CodeIframe.uid, htmlContent);
 	},
 
-	async GameEvents_Event268_Act2(runtime, localVars)
+	async GameEvents_Event264_Act2(runtime, localVars)
 	{
 // Получаем iframe и код из редактора
 const iframeObj = runtime.objects.CodeIframe.getFirstInstance();
@@ -308,7 +270,7 @@ cmdList.forEach((item, index) => {
 console.log('Queue обновлён, команд:', cmdList.length);
 	},
 
-	async GameEvents_Event278_Act2(runtime, localVars)
+	async GameEvents_Event274_Act2(runtime, localVars)
 	{
 		console.log(localVars.our_code);
 		
@@ -391,6 +353,84 @@ console.log('Queue обновлён, команд:', cmdList.length);
 		
 		// Запускаем печать
 		typeCodeInEditor(aiGeneratedCode);
+		
+	},
+
+	async MenuEvents_Event129_Act2(runtime, localVars)
+	{
+		const Input = runtime.objects.Input.getFirstPickedInstance();
+		
+		Input.text = (function(input) {
+		    // Разрешаем все буквы (включая ё/Ё), дефис и пробел
+		    let cleaned = input.replace(/[^a-zA-Zа-яА-ЯёЁ\- ]/g, '');
+		    
+		    // Заменяем множественные пробелы на один
+		    cleaned = cleaned.replace(/\s{2,}/g, ' ');
+		    
+		    // Убираем пробелы в начале и конце
+		    cleaned = cleaned.trim();
+		    
+		    // Преобразуем всё в верхний регистр
+		    cleaned = cleaned.toUpperCase();
+		    
+			return cleaned;
+		})(Input.text);
+	},
+
+	async MenuEvents_Event130_Act1(runtime, localVars)
+	{
+		let CatSay = runtime.objects.Aqum.getFirstPickedInstance().instVars.Say;
+		
+		const BadwordsMap = runtime.objects.Badwords.getFirstPickedInstance().getDataMap(); // Переименовал переменную, чтобы подчеркнуть, что это Map
+		const Input = runtime.objects.Input.getFirstPickedInstance();
+		
+		const inputTextLower = Input.text.toLowerCase(); // Преобразуем введенный текст в нижний регистр
+		
+		let foundBadWord = false; // Флаг для отслеживания, найдено ли плохое слово
+		
+		if (BadwordsMap) {
+		  for (const [key, value] of BadwordsMap) {
+		    if (inputTextLower.includes(key.toLowerCase())) { // Сравниваем в нижнем регистре, используя includes
+		      CatSay = value;
+		      Input.text = "";  // Очищаем поле ввода
+		      foundBadWord = true;
+		      break; // Прерываем цикл, если нашли первое совпадение
+		    }
+		  }
+		}
+		
+		if (!foundBadWord) {
+		  localVars.cat_name = Input.text;
+		}
+		
+		runtime.objects.Aqum.getFirstPickedInstance().instVars.Say = CatSay;
+	},
+
+	async MenuEvents_Event33_Act3(runtime, localVars)
+	{
+		const GP = runtime.objects.GP.getFirstInstance();
+		const gp = GP.gp;
+		
+		console.log("=== AUTH INFO ===");
+		
+		console.log(
+		    "Platform config JSON:",
+		    JSON.stringify(gp.platform.config, null, 2)
+		);
+		console.log("Platform adapter:", gp.platform.adapter);
+		console.log("hasIntegratedAuth:", gp.platform.hasIntegratedAuth);
+		console.log("isSecretCodeAuthAvailable:", gp.platform.isSecretCodeAuthAvailable);
+		console.log("player credentials:", gp.player.get("credentials"));
+		console.log("player:", gp.player);
+		
+		console.log("SDK:", gp);
+		console.log("Platform:", gp.platform);
+		console.log("Platform type:", gp.platform?.type);
+		console.log("Integrated auth:", gp.platform?.hasIntegratedAuth);
+		console.log("Secret code auth:", gp.platform?.isSecretCodeAuthAvailable);
+		console.log("Logged in:", gp.player?.isLoggedIn);
+		
+		
 		
 	}
 };

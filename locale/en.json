@@ -1,0 +1,24 @@
+{
+    "locale": "en",
+    "strings":
+    {
+        "music": "Music",
+        "sound": "Sounds",
+        "music_percent": "[size=20]Not singing...[/size]",
+        "sound_percent": "[size=16]Not meowing...[/size]",
+
+        "proglang": "[size=24]Programming[/size]\nLanguage",
+        "humanlang": "[size=30]Human[/size]\nLanguage",
+
+        "back": "Back",
+        "settings": "Settings",
+        "my_cat": "My Cat",
+
+        "profile": "[u]Cat Passport",
+        "cat_skin": "Breed",
+        "cat_name": "Nickname",
+        "cat_desc": "Distinguishing marks",
+        "money": "Savings",
+        "game_skin": "Paper stock"
+    }
+}

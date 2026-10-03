@@ -1,0 +1,24 @@
+{
+	"locale": "ru",
+	"strings":
+    {
+		"music": "Музыка",
+        "sound": "Звуки",
+        "music_percent": "[size=20]Не поём...[/size]",
+        "sound_percent": "[size=16]Не мявкаем...[/size]",
+
+        "proglang": "[size=30]Язык[/size]\nпрограммирования",
+        "humanlang": "[size=30]Язык[/size]\nчеловеческий",
+
+        "back": "Назад",
+        "settings": "Настройки",
+        "my_cat": "Мой кот",
+
+        "profile": "[u]Паспорт кота",
+        "cat_skin": "Порода",
+        "cat_name": "Кличка",
+        "cat_desc": "Особые приметы",
+        "money": "Сбережения",
+        "game_skin": "Тип бумаги"
+	}	
+}

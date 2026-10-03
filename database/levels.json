@@ -1,0 +1,156 @@
+[
+  {
+    "id": 0,
+    "direction": "right",
+    "title": "Движение кота",
+    "tasks": [
+      "Съесть колбасу",
+      "Использовать не более 15 команд",
+      "Не больше 3 попыток"
+    ],
+    "icon": "forward",
+    "name": "Tutorial",
+    "tutorial": true,
+    "commands": ["Forward", "Left", "Right"]
+  },
+  {
+    "id": 1,
+    "direction": "right",
+    "title": "Цикл [color=deepskyblue]\"Повтор\" (For)[/color]",
+    "tasks": [
+      "Съесть колбасу",
+      "Использовать не более 6 команд",
+      "Использовать цикл [color=deepskyblue]повтора[/color]"
+    ],
+    "icon": "for",
+    "name": "For",
+    "tutorial": true,
+    "commands": ["Forward", "Left", "Right", "Cycle", "End"]
+  },
+  {
+    "id": 2,
+    "direction": "down",
+    "title": "[color=deepskyblue]Змейка[/color]",
+    "tasks": [
+      "Съесть колбасу",
+      "Использовать не более 16 команд",
+      "Использовать цикл [color=deepskyblue]повтора[/color]"
+    ],
+    "icon": "for",
+    "name": "New-For1",
+    "tutorial": false,
+    "commands": ["Forward", "Left", "Right", "Cycle", "End"]
+  },
+  {
+    "id": 3,
+    "direction": "up",
+    "title": "[color=deepskyblue]Лесенка[/color]",
+    "tasks": [
+      "Съесть колбасу",
+      "Использовать не более 14 команд",
+      "Использовать цикл [color=deepskyblue]повтора[/color]"
+    ],
+    "icon": "for",
+    "name": "New-For2",
+    "tutorial": false,
+    "commands": ["Forward", "Left", "Right", "Cycle", "End"]
+  },
+  {
+    "id": 4,
+    "direction": "right",
+    "title": "Цикл [color=dodgerblue]\"Пока\" (While)[/color]",
+    "tasks": [
+      "Съесть колбасу",
+      "Использовать не более 7 команд",
+      "Использовать цикл [color=dodgerblue]Пока[/color]"
+    ],
+    "icon": "while",
+    "name": "While",
+    "tutorial": true,
+    "commands": ["Forward", "Left", "Right", "Cycle", "End"]
+  },
+  {
+    "id": 5,
+    "direction": "right",
+    "title": "Цикл [color=dodgerblue]Спиралька[/color]",
+    "tasks": [
+      "Съесть колбасу",
+      "Использовать не более 6 команд",
+      "Использовать цикл [color=dodgerblue]Пока[/color] и [color=skyblue]Повтор[/color]"
+    ],
+    "icon": "while",
+    "name": "Spiral",
+    "tutorial": false,
+    "commands": ["Forward", "Left", "Right", "Cycle", "End"]
+  },
+  {
+    "id": 6,
+    "direction": "right",
+    "title": "Комбинация циклов",
+    "tasks": [
+      "Съесть колбасу",
+      "Использовать цикл [color=deepskyblue]Повтора[/color]",
+      "Использовать цикл [color=dodgerblue]Пока[/color]"
+    ],
+    "icon": "cycle",
+    "name": "Snake",
+    "tutorial": false,
+    "commands": ["Forward", "Left", "Right", "Cycle", "End"]
+  },
+  {
+    "id": 7,
+    "direction": "right",
+    "title": "Оператор [color=rgb(200,0,0)]\"Иначе\" (else)[/color]",
+    "tasks": [
+      "Съесть колбасу",
+      "Использовать не более 11 команд",
+      "Использовать команду [color=rgb(200,0,0)]Иначе[/color]"
+    ],
+    "icon": "else",
+    "name": "Else-Snake",
+    "tutorial": true,
+    "commands": ["Forward", "Left", "Right", "Cycle", "End", "Else"]
+  },
+  {
+    "id": 8,
+    "direction": "up",
+    "title": "Конструкция [color=rgb(200,0,0)]else[/color] [color=Deepskyblue ]if[/color]",
+    "tasks": [
+      "Съесть колбасу",
+      "Использовать не более 11 команд",
+      "Использовать команду [color=rgb(200,0,0)]Иначе[/color]"
+    ],
+    "icon": "else",
+    "name": "Elif",
+    "tutorial": false,
+    "commands": ["Forward", "Left", "Right", "Cycle", "End", "Else"]
+  },
+  {
+    "id": 9,
+    "direction": "up",
+    "title": "Сложный алгоритм",
+    "tasks": [
+      "Съесть всё съедобное",
+      "Использовать не более 12 команд",
+      "Не больше 5 попыток"
+    ],
+    "icon": "forward",
+    "name": "MyRoom",
+    "tutorial": false,
+    "commands": ["Forward", "Left", "Right", "Cycle", "End", "Else"]
+  },
+  {
+    "id": 10,
+    "direction": "down",
+    "title": "[color=Forestgreen]Лабиринт[/color]",
+    "tasks": [
+      "Съесть колбасу",
+      "Использовать не более 16 команд",
+      "Не больше 5 попыток"
+    ],
+    "icon": "cycle",
+    "name": "Christmas-Tree",
+    "tutorial": false,
+    "commands": ["Forward", "Left", "Right", "Cycle", "End", "Else"]
+  }
+]

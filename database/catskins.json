@@ -1,0 +1,32 @@
+{
+    "c2array": true,
+    "size": [
+        2,
+        3,
+        1
+    ],
+    "data": [
+        [
+            [
+                "Note"
+            ],
+            [
+                "Байткот"
+            ],
+            [
+                "[icon=star-note] Крутой\n[icon=star-note] Пушистый\n[icon=star-note] Надёжный"
+            ]
+        ],
+        [
+            [
+                "Coder"
+            ],
+            [
+                "Кот-кодер"
+            ],
+            [
+                "[icon=star-note] Выглядит умнее\n[icon=star-note] Тоже пушистый\n[icon=star-note] + 1 доп.команда"
+            ]
+        ]
+    ]
+}

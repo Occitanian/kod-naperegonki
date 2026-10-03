@@ -1,0 +1,30 @@
+{
+    "Note": {
+        "name": "Тетрадка",
+        "music": "calculator",
+        "bg_accent": "255,255,225",
+        "blue_accent": "50,50,255",
+        "red_accent": "175,0,0"
+    },
+    "Halloween": {
+        "name": "Хэллоуин",
+        "music": "cafeteria",
+        "bg_accent": "0,0,0",
+        "blue_accent": "255,120,0",
+        "red_accent": "200,0,0"
+    },
+    "Christmas": {
+        "name": "Новый Год",
+        "music": "christmas",
+        "bg_accent": "30,60,130",
+        "blue_accent": "240,248,255",
+        "red_accent": "220,20,60"
+    },
+    "Spring": {
+        "name": "Весна",
+        "music": "spring",
+        "bg_accent": "255,255,225",
+        "blue_accent": "0,128,0",
+        "red_accent": "175,0,0"
+    }
+}
